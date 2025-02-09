@@ -1,0 +1,61 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.1 Binary Template
+//
+//      File: VX.bt
+//   Authors: Adrien Krebet
+//    E-mail: adrienkrebet@gmail.com
+//   Version: 0.1
+//   Purpose: Figure out this bloody NDS format
+//  Category: Video
+// File Mask: *.vx
+//  ID Bytes: 56 58 44 53
+//   History: 
+//------------------------------------------------
+
+FSeek(0x0);
+
+typedef struct VX_HEADER {
+    char magic[4];
+    uint frame_count;
+    uint width;
+    uint height;
+    uint16 frame_rate_high <read=(this / 65536.0)>;
+    uint16 frame_rate_low;
+    uint quantiser;
+    uint sample_rate;
+    uint audio_stream_count;
+    uint max_video_frame_size;
+    uint audio_extradata_offset <format=hex>;
+    uint seek_table_offset <format=hex>;
+    uint seek_table_entry_count;
+};
+
+VX_HEADER header <fgcolor=cBlack, bgcolor=0x0000FF>;
+
+
+FSeek(header.seek_table_offset);
+uint padding;
+uint data_start;
+FSeek(data_start);
+
+typedef struct AUDIO_VIDEO_FRAMES {
+    uint16 frame_size;
+    uint16 audio_frame;
+    byte frame_header <format=binary>; //???
+    byte data[frame_size-3]; 
+    // figure out the shit here
+};
+
+local int i;
+local int64 bg_color = 0x00FFFF; 
+
+for (i = 0; i < header.frame_count; i++) 
+{
+    bg_color = (bg_color + 0x00F000 * i); 
+
+    AUDIO_VIDEO_FRAMES data <fgcolor=cBlack, bgcolor=bg_color, optimize=false>;
+}
+
+
+// not touching audio extradata rn, just video
+// got example vx files with no audio
